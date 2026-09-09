@@ -10,6 +10,8 @@ def mock_settings() -> Settings:
     return Settings(
         mqtt_host="test_host",
         mqtt_port=1883,
+        mqtt_username="test_user",
+        mqtt_password="test_password",
         mqtt_client_id="test_client_id",
         mqtt_keepalive=120,
         mqtt_topic="swd/test/#",
@@ -33,9 +35,19 @@ async def test_mqtt_subscriber_initialization(
     """
     mock_get_settings.return_value = mock_settings
     
-    # Mock the context manager behavior of aiomqtt.Client
     mock_client_instance = AsyncMock()
-    mock_aiomqtt_client_class.return_value.__aenter__.return_value = mock_client_instance
+    
+    # 1. Setup the async context manager correctly
+    mock_client_instance.__aenter__.return_value = mock_client_instance
+    mock_client_instance.__aexit__.return_value = None
+
+    # 2. Setup messages as an empty async generator to prevent TypeError
+    async def mock_messages() -> Any:
+        if False:
+            yield
+    mock_client_instance.messages = mock_messages()
+
+    mock_aiomqtt_client_class.return_value = mock_client_instance
 
     # Dummy handler
     async def dummy_handler(topic: str, payload: bytes) -> None:
@@ -43,23 +55,21 @@ async def test_mqtt_subscriber_initialization(
 
     subscriber = MqttSubscriber(handler=dummy_handler)
     
-    # We want the subscriber loop to run exactly once and then stop.
-    # To do this, we'll set the stop_event INSIDE the async context manager
-    # by mocking the `__aenter__` to trigger the stop.
-    async def side_effect_aenter(*args: Any, **kwargs: Any) -> AsyncMock:
+    # 3. Stop the subscriber immediately after it subscribes
+    # so the infinite while-loop breaks cleanly
+    async def mock_subscribe(*args: Any, **kwargs: Any) -> None:
         subscriber.stop()
-        return mock_client_instance
         
-    mock_aiomqtt_client_class.return_value.__aenter__.side_effect = side_effect_aenter
+    mock_client_instance.subscribe.side_effect = mock_subscribe
 
-    # Run the start method (it will connect, set stop, and then exit the message loop)
     await subscriber.start()
 
-    # 1. Verify Client kwargs (client_id, keepalive)
     mock_aiomqtt_client_class.assert_called_once_with(
         hostname="test_host",
         port=1883,
         keepalive=120,
+        username="test_user",
+        password="test_password",
         identifier="test_client_id"
     )
 

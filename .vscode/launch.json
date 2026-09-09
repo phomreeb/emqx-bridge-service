@@ -6,7 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "console": "integratedTerminal",
+            "console": "internalConsole",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src"
             }

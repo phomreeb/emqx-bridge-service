@@ -17,9 +17,23 @@ def test_topic_parse_valid_format() -> None:
     assert topic.action == "telemetry"
 
 
+def test_topic_parse_with_prefix() -> None:
+    """
+    Test parsing an MQTT topic that contains prefixes before the main 4 segments.
+    """
+    topic_str = "processed/swd/drr/device-001/telemetry"
+    topic = Topic.parse(topic_str)
+
+    assert topic.raw_topic == topic_str
+    assert topic.org == "swd"
+    assert topic.project == "drr"
+    assert topic.device_id == "device-001"
+    assert topic.action == "telemetry"
+
+
 def test_topic_parse_invalid_format() -> None:
     """
-    Test parsing an invalid MQTT topic (not 4 segments).
+    Test parsing an invalid MQTT topic (less than 4 segments).
     """
     topic_str = "drr/phangan/device_001"  # Only 3 segments
 
@@ -39,6 +53,15 @@ def test_topic_to_amqp_routing_key() -> None:
     assert topic.to_amqp_routing_key() == "drr.phangan.device_001.telemetry"
 
 
+def test_topic_to_amqp_routing_key_with_prefix() -> None:
+    """
+    Test converting an MQTT topic with a prefix to an AMQP routing key.
+    """
+    topic_str = "processed/swd/drr/device-001/telemetry"
+    topic = Topic.parse(topic_str)
+    assert topic.to_amqp_routing_key() == "swd.drr.device-001.telemetry"
+
+
 def test_enrich_payload_valid_json() -> None:
     """
     Test enriching a valid JSON payload.
@@ -51,6 +74,17 @@ def test_enrich_payload_valid_json() -> None:
     assert enriched["temperature"] == 25.5
     assert enriched["humidity"] == 60
     assert enriched["device_id"] == "device_001"
+
+
+def test_enrich_payload_valid_json_with_trace_id() -> None:
+    """
+    Test enriching a valid JSON payload with a trace_id.
+    """
+    raw_payload = b'{"status": "ok"}'
+    enriched = enrich_payload(raw_payload, "device_001", "trace-1234")
+
+    assert enriched["status"] == "ok"
+    assert enriched["trace_id"] == "trace-1234"
 
 
 def test_enrich_payload_valid_json_string() -> None:

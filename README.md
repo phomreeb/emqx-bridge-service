@@ -19,6 +19,35 @@ This project is built using **Hexagonal Architecture (Ports and Adapters)** to d
 * **Resilient Publishing**: Built-in retry logic when publishing to RabbitMQ to prevent data loss.
 * **Production-Ready Logging**: Uses `structlog` for structured JSON logging in production and colorful, readable logs during development.
 
+## ⚙️ EMQX Rule Engine Setup
+
+To route messages properly from EMQX to this bridge service, you can use the EMQX Rule Engine. Configure a rule with the following SQL query and action payload template:
+
+**SQL Query:**
+
+```sql
+SELECT
+  payload,
+  topic,
+  CASE
+    WHEN is_not_null(user_properties."x-trace-id") THEN user_properties."x-trace-id"
+    WHEN is_not_null(payload.trace_id) AND payload.trace_id != 'undefined' THEN payload.trace_id
+    ELSE id
+  END AS trace_id
+FROM
+  "swd/#"
+```
+
+**Action Payload Template:**
+
+```json
+{
+  "payload": ${payload},
+  "topic": "${topic}",
+  "trace_id": "${trace_id}"
+}
+```
+
 ## 🚀 Getting Started
 
 ### Prerequisites
