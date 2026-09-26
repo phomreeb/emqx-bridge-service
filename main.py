@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
@@ -20,9 +21,19 @@ broker = RabbitBroker(str(settings.rabbitmq_url))
 # Initialize FastStream app
 app = FastStream(broker)
 
-# Global reference for the MQTT subscriber task so we can cancel it cleanly
-mqtt_task: asyncio.Task | None = None
-mqtt_subscriber: MqttSubscriber | None = None
+
+from typing import Any
+
+
+@dataclass
+class AppState:
+    """Holds global application state to avoid using raw global variables."""
+
+    mqtt_task: asyncio.Task[Any] | None = None
+    mqtt_subscriber: MqttSubscriber | None = None
+
+
+state = AppState()
 
 
 @app.on_startup
@@ -31,7 +42,6 @@ async def startup_event() -> None:
     Hook to run when the FastStream application starts.
     We initialize our services and start the MQTT subscriber here.
     """
-    global mqtt_task, mqtt_subscriber
     logger.info("Starting emqx-bridge-service...")
 
     # Wire up dependencies
@@ -39,10 +49,10 @@ async def startup_event() -> None:
     bridge_service = BridgeService(publisher=publisher)
 
     # Initialize MQTT subscriber
-    mqtt_subscriber = MqttSubscriber(handler=bridge_service.handle_mqtt_message)
+    state.mqtt_subscriber = MqttSubscriber(handler=bridge_service.handle_mqtt_message)
 
     # Start the MQTT subscriber loop in the background
-    mqtt_task = asyncio.create_task(mqtt_subscriber.start())
+    state.mqtt_task = asyncio.create_task(state.mqtt_subscriber.start())
     logger.info("MQTT subscriber background task started.")
 
 
@@ -54,11 +64,11 @@ async def shutdown_event() -> None:
     """
     logger.info("Shutting down emqx-bridge-service...")
 
-    if mqtt_subscriber:
-        mqtt_subscriber.stop()
+    if state.mqtt_subscriber:
+        state.mqtt_subscriber.stop()
 
-    if mqtt_task:
-        await mqtt_task
+    if state.mqtt_task:
+        await state.mqtt_task
         logger.info("MQTT subscriber background task stopped.")
 
 

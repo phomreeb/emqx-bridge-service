@@ -44,7 +44,10 @@ def setup_logging() -> None:
     )
 
 
-def get_logger(name: str) -> structlog.BoundLogger:
+from typing import Any
+
+
+def get_logger(name: str) -> Any:
     """
     Get a structlog logger instance.
     """

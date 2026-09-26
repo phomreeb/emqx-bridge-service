@@ -26,11 +26,10 @@ class Settings(BaseSettings):
         default=None,
         description="MQTT Client ID. If not set, a random one is generated.",
     )
-    mqtt_keepalive: int = Field(default=60, description="MQTT keepalive interval in seconds")
-    mqtt_topic: str = Field(
-        default="swd/+/#",
-        description="MQTT topic to subscribe to"
+    mqtt_keepalive: int = Field(
+        default=60, description="MQTT keepalive interval in seconds"
     )
+    mqtt_topic: str = Field(default="org/+/#", description="MQTT topic to subscribe to")
     mqtt_qos: int = Field(default=1, description="MQTT Quality of Service (0, 1, 2)")
     mqtt_share_group: str | None = Field(
         default=None,

@@ -7,12 +7,12 @@ def test_topic_parse_valid_format() -> None:
     """
     Test parsing a valid MQTT topic.
     """
-    topic_str = "drr/phangan/device_001/telemetry"
+    topic_str = "org/project/device_001/telemetry"
     topic = Topic.parse(topic_str)
 
     assert topic.raw_topic == topic_str
-    assert topic.org == "drr"
-    assert topic.project == "phangan"
+    assert topic.org == "org"
+    assert topic.project == "project"
     assert topic.device_id == "device_001"
     assert topic.action == "telemetry"
 
@@ -21,12 +21,12 @@ def test_topic_parse_with_prefix() -> None:
     """
     Test parsing an MQTT topic that contains prefixes before the main 4 segments.
     """
-    topic_str = "processed/swd/drr/device-001/telemetry"
+    topic_str = "processed/global/org/device-001/telemetry"
     topic = Topic.parse(topic_str)
 
     assert topic.raw_topic == topic_str
-    assert topic.org == "swd"
-    assert topic.project == "drr"
+    assert topic.org == "global"
+    assert topic.project == "org"
     assert topic.device_id == "device-001"
     assert topic.action == "telemetry"
 
@@ -35,7 +35,7 @@ def test_topic_parse_invalid_format() -> None:
     """
     Test parsing an invalid MQTT topic (less than 4 segments).
     """
-    topic_str = "drr/phangan/device_001"  # Only 3 segments
+    topic_str = "org/project/device_001"  # Only 3 segments
 
     with pytest.raises(ValueError) as exc_info:
         Topic.parse(topic_str)
@@ -47,19 +47,19 @@ def test_topic_to_amqp_routing_key() -> None:
     """
     Test converting an MQTT topic to an AMQP routing key.
     """
-    topic_str = "drr/phangan/device_001/telemetry"
+    topic_str = "org/project/device_001/telemetry"
     topic = Topic.parse(topic_str)
 
-    assert topic.to_amqp_routing_key() == "drr.phangan.device_001.telemetry"
+    assert topic.to_amqp_routing_key() == "org.project.device_001.telemetry"
 
 
 def test_topic_to_amqp_routing_key_with_prefix() -> None:
     """
     Test converting an MQTT topic with a prefix to an AMQP routing key.
     """
-    topic_str = "processed/swd/drr/device-001/telemetry"
+    topic_str = "processed/global/org/device-001/telemetry"
     topic = Topic.parse(topic_str)
-    assert topic.to_amqp_routing_key() == "swd.drr.device-001.telemetry"
+    assert topic.to_amqp_routing_key() == "global.org.device-001.telemetry"
 
 
 def test_enrich_payload_valid_json() -> None:

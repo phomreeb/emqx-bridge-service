@@ -57,7 +57,7 @@ async def test_handle_mqtt_message_no_trace_id_generates_one() -> None:
     await service.handle_mqtt_message(topic, payload)
 
     assert len(mock_publisher.published_messages) == 1
-    published_payload, routing_key, trace_id = mock_publisher.published_messages[0]
+    published_payload, _routing_key, trace_id = mock_publisher.published_messages[0]
 
     assert trace_id is not None
     assert "trace_id" in published_payload

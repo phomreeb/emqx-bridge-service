@@ -49,7 +49,9 @@ class Topic:
         return f"{self.org}.{self.project}.{self.device_id}.{self.action}"
 
 
-def enrich_payload(raw_payload: bytes | str, device_id: str, trace_id: str | None = None) -> dict[str, Any]:
+def enrich_payload(
+    raw_payload: bytes | str, device_id: str, trace_id: str | None = None
+) -> dict[str, Any]:
     """
     Intercept the incoming message payload from MQTT.
     Attempt to parse as JSON.

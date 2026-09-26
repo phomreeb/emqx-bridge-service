@@ -1,7 +1,7 @@
 [project]
 name = "emqx-bridge-service"
 version = "0.1.0"
-description = "Add your description here"
+description = "High-performance IoT Middleware bridging EMQX and RabbitMQ"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -15,7 +15,9 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=6.0.0",
     "ruff>=0.16.6",
+    "mypy>=1.15.0",
 ]
 
 [tool.pytest.ini_options]
@@ -25,4 +27,19 @@ pythonpath = [
 testpaths = [
     "tests",
 ]
-addopts = "-v"
+addopts = "-v --cov=src --cov-report=term-missing --cov-report=xml"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+mypy_path = "src"
+explicit_package_bases = true
+plugins = [
+  "pydantic.mypy"
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true

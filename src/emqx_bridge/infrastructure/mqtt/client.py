@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 import aiomqtt
 from aiomqtt import MqttError
@@ -39,7 +40,7 @@ class MqttSubscriber:
                 )
 
                 # Setup client kwargs
-                client_kwargs = {
+                client_kwargs: dict[str, Any] = {
                     "hostname": self.settings.mqtt_host,
                     "port": self.settings.mqtt_port,
                     "keepalive": self.settings.mqtt_keepalive,

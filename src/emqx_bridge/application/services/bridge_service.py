@@ -28,7 +28,7 @@ class BridgeService:
         # Decode payload for readable logging
         try:
             readable_payload = payload.decode("utf-8")
-        except Exception:
+        except UnicodeDecodeError:
             readable_payload = str(payload)
 
         # Attempt to extract trace_id for early logging
@@ -37,7 +37,7 @@ class BridgeService:
             parsed_data = json.loads(readable_payload)
             if isinstance(parsed_data, dict):
                 trace_id = parsed_data.get("trace_id")
-        except Exception:
+        except json.JSONDecodeError:
             pass
 
         if not trace_id:
@@ -63,7 +63,9 @@ class BridgeService:
                 device_id=device_id,
                 trace_id=trace_id,
             )
-            await self.publisher.publish(enriched_payload, routing_key, trace_id=trace_id)
+            await self.publisher.publish(
+                enriched_payload, routing_key, trace_id=trace_id
+            )
 
             logger.info(
                 "Message bridged successfully",
